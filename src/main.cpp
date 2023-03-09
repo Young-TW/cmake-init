@@ -11,9 +11,11 @@ int main(int argc, char* argv[]){
     std::string project_name;
     std::cin >> project_name;
 
-    std::cout << "Select C++ standard(11, 14, 17, 20, 23): ";
     int cxx_std;
-    std::cin >> cxx_std;
+    do {
+        std::cout << "Select C++ standard(11, 14, 17, 20, 23): ";
+        std::cin >> cxx_std;
+    } while (cxx_std != 11 && cxx_std != 14 && cxx_std != 17 && cxx_std != 20 && cxx_std != 23);
 
     std::cout << "Configure .gitignore(Y/n): ";
     bool gitignore_config = true;
@@ -32,6 +34,9 @@ int main(int argc, char* argv[]){
             gitignore();
         }
     } else if (argc == 2) {
+        if (!std::filesystem::exists(argv[1])) {
+            std::filesystem::create_directory(argv[1]);
+        }
         std::filesystem::current_path(argv[1]);
         std::filesystem::create_directory("src");
         std::filesystem::create_directory("include");
