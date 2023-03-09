@@ -14,6 +14,7 @@ int cmakelists_txt(std::string project_name, int cxx_std){
     << "file(GLOB_RECURSE SRC_FILES ./src/*.cpp)\n\n"
     << "add_executable(${PROJECT_NAME} ${SRC_FILES})";
     fout.close();
+    return 0;
 }
 
 #endif

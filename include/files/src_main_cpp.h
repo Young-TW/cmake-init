@@ -11,6 +11,7 @@ int src_main_cpp(){
     << "    return 0;\n"
     << "}\n";
     fout.close();
+    return 0;
 }
 
 #endif

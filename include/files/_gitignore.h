@@ -10,6 +10,7 @@ int gitignore(){
     << "/.vscode\n"
     << "/.idea";
     fout.close();
+    return 0;
 }
 
 #endif
