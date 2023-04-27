@@ -6,7 +6,7 @@
 #include "files/src_main_cpp.h"
 #include "files/_gitignore.h"
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     std::cout << "Project name: ";
     std::string project_name;
     std::cin >> project_name;
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     bool gitignore_config = true;
     char status;
     std::cin >> status;
-    if(status == 'n' || status == 'N'){
+    if(status == 'n' || status == 'N') {
         gitignore_config = false;
     }
 
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
         std::filesystem::create_directory("include");
         cmakelists_txt(project_name, cxx_std);
         src_main_cpp();
-        if(gitignore_config){
+        if(gitignore_config) {
             gitignore();
         }
     } else if (argc == 2) {
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
         std::filesystem::create_directory("include");
         cmakelists_txt(project_name, cxx_std);
         src_main_cpp();
-        if(gitignore_config){
+        if(gitignore_config) {
             gitignore();
         }
     }

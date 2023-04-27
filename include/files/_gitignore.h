@@ -5,7 +5,7 @@
 
 int gitignore(){
     fout.open(".gitignore");
-    fout << "/build/*\n"
+    fout << "/build\n"
     << "*.DS_Store\n"
     << "/.vscode\n"
     << "/.idea";

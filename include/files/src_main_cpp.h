@@ -3,10 +3,10 @@
 
 #include "fstream.h"
 
-int src_main_cpp(){
+int src_main_cpp() {
     fout.open("./src/main.cpp");
     fout << "#include <iostream>\n\n"
-    << "int main(int argc, char* argv[]){\n"
+    << "int main(int argc, char* argv[]) {\n"
     << "    std::cout << \"Hello Young!\";\n"
     << "    return 0;\n"
     << "}\n";
