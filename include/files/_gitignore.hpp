@@ -1,5 +1,5 @@
-#ifndef FILES_GITIGNORE_H
-#define FILES_GITIGNORE_H
+#ifndef FILES_GITIGNORE_HPP
+#define FILES_GITIGNORE_HPP
 
 #include "fstream.h"
 

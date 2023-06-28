@@ -1,5 +1,5 @@
-#ifndef FILES_SRC_MAIN_CPP_H
-#define FILES_SRC_MAIN_CPP_H
+#ifndef FILES_SRC_MAIN_CPP_HPP
+#define FILES_SRC_MAIN_CPP_HPP
 
 #include "fstream.h"
 

@@ -1,5 +1,5 @@
-#ifndef FILES_CMAKELIST_TXT_H
-#define FILES_CMAKELIST_TXT_H
+#ifndef FILES_CMAKELIST_TXT_HPP
+#define FILES_CMAKELIST_TXT_HPP
 
 #include <string>
 
