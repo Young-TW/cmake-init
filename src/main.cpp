@@ -38,8 +38,11 @@ int main(int argc, char* argv[]) {
         std::cin >> project_name;
     }
 
+    std::cout << std::filesystem::current_path() << std::endl;
+
     std::filesystem::create_directory(project_name);
     std::filesystem::path project_root = std::filesystem::current_path() / project_name;
+    std::filesystem::current_path(project_root);
 
     int cxx_std;
 
@@ -52,8 +55,10 @@ int main(int argc, char* argv[]) {
         } while (cxx_std != 11 && cxx_std != 14 && cxx_std != 17 && cxx_std != 20 && cxx_std != 23);
     }
 
-    std::filesystem::create_directory("/src");
+    std::filesystem::create_directory("src");
     src_main_cpp();
+
+    cmakelists_txt(project_name, cxx_std);
 
     if (result.count("gitignore")) {
         if (result["gitignore"].as<bool>()) {
