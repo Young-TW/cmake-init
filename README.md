@@ -3,5 +3,5 @@
 ## install
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/Young-TW/cmake-init/master/script/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Young-TW/cmake-init/main/script/install.sh | bash
 ```
