@@ -25,11 +25,11 @@ if ! [ -x "$(command -v clang)" ]; then
 fi
 
 git clone --recursive https://github.com/Young-TW/cmake-init.git
-cd yush || exit
+cd cmake-init || exit
 echo "start Build"
 git submodule update --init --recursive
 cmake -B build
 cmake --build build --config RELEASE
 sudo cmake --install build --config RELEASE
-echo "yush installed successfully"
+echo "cmake-init installed successfully"
 cd .. || exit
