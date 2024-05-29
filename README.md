@@ -3,7 +3,5 @@
 ## install
 
 ```sh
-cmake . -B build
-cmake --build build --config RELEASE
-cmake --install build
+curl -sSL https://raw.githubusercontent.com/Young-TW/cmake-init/master/script/install.sh | bash
 ```
