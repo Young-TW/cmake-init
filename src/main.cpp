@@ -1,5 +1,6 @@
-#include <iostream>
+#include <print>
 #include <filesystem>
+#include <iostream>
 #include <fstream>
 
 #include <cxxopts.hpp>
@@ -21,12 +22,12 @@ int main(int argc, char* argv[]) {
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
-        std::cout << options.help() << std::endl;
+        std::println("{}", options.help());
         return 0;
     }
 
     if (result.count("version")) {
-        std::cout << "0.1.0" << std::endl;
+        std::println("cmake-init v0.1.0");
         return 0;
     }
 
@@ -34,11 +35,11 @@ int main(int argc, char* argv[]) {
     if (result.count("project-name") != 0) {
         project_name = result["project-name"].as<std::string>();
     } else {
-        std::cout << "Project name: ";
+        std::print("Enter project name: ");
         std::cin >> project_name;
     }
 
-    std::cout << std::filesystem::current_path() << std::endl;
+    std::println("Current path: {}", std::filesystem::current_path().string());
 
     std::filesystem::create_directory(project_name);
     std::filesystem::path project_root = std::filesystem::current_path() / project_name;
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]) {
         cxx_std = result["cxx-std"].as<int>();
     } else {
         do {
-            std::cout << "Select C++ standard(11, 14, 17, 20, 23): ";
+            std::print("Select C++ standard(11, 14, 17, 20, 23): ");
             std::cin >> cxx_std;
         } while (cxx_std != 11 && cxx_std != 14 && cxx_std != 17 && cxx_std != 20 && cxx_std != 23);
     }
@@ -65,7 +66,7 @@ int main(int argc, char* argv[]) {
             gitignore();
         }
     } else {
-        std::cout << "Configure .gitignore(Y/n): ";
+        std::print("Configure .gitignore(Y/n): ");
         bool gitignore_config = true;
         char status;
         std::cin >> status;
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cout << "All done!";
+    std::println("All done!");
 
     return 0;
 }
