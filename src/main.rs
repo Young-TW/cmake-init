@@ -33,7 +33,7 @@ fn main() {
                 .short('s')
                 .long("cxx-std")
                 .default_value("17")
-                .help("C++ standard (11, 14, 17, 20, 23)"),
+                .help("C++ standard (11, 14, 17, 20, 23, 26)"),
         )
         .arg(
             Arg::new("gitignore")
