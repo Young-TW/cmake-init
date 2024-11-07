@@ -3,5 +3,7 @@
 ## install
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/Young-TW/cmake-init/main/script/install.sh | bash
+git clone https://github.com/Young-TW/cmake-init.git
+cd cmake-init
+cargo install --path .
 ```
