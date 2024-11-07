@@ -3,10 +3,10 @@ use std::io::Write;
 
 pub fn cmakelists_txt(project_name: &str, cxx_std: i32) {
     let mut file = File::create("CMakeLists.txt").unwrap();
-    let content = include_str!("../files/CMakeLists.txt");
+    let origin_content = include_str!("../files/CMakeLists.txt");
     // Replace project_name and cxx_std in the content
-    let content = content.replace("{{project_name}}", project_name);
-    let content = content.replace("{{cxx_std}}", &cxx_std.to_string());
+    let projname_content = origin_content.replace("{{PROJECT_NAME}}", project_name);
+    let content = projname_content.replace("{{cxx_std}}", &cxx_std.to_string());
     file.write_all(content.as_bytes()).unwrap();
 }
 
@@ -19,7 +19,7 @@ mod tests {
         let project_name = "minesweeper";
         cmakelists_txt(project_name, 17);
         let content = std::fs::read_to_string("CMakeLists.txt").unwrap();
-        assert!(content.contains("project(minesweeper)"));
+        assert!(content.contains("project(minesweeper VERSION 0.0.0)"));
     }
 
     #[test]
