@@ -60,8 +60,8 @@ fn main() {
         .parse()
         .expect("Invalid C++ standard");
 
-    if ![11, 14, 17, 20, 23].contains(&cxx_std) {
-        eprintln!("Invalid C++ standard. Please select 11, 14, 17, 20, or 23.");
+    if ![11, 14, 17, 20, 23, 26].contains(&cxx_std) {
+        eprintln!("Invalid C++ standard. Please select 11, 14, 17, 20, 23, or 26.");
         return;
     }
 
