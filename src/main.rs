@@ -23,9 +23,8 @@ fn main() {
         )
         .arg(
             Arg::new("project-name")
-                .short('n')
-                .long("project-name")
-                .default_value("project")
+                .index(1)
+                .required(true)
                 .help("Project name"),
         )
         .arg(
