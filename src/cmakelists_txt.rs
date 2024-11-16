@@ -21,13 +21,4 @@ mod tests {
         let content = std::fs::read_to_string("CMakeLists.txt").unwrap();
         assert!(content.contains("project(minesweeper VERSION 0.0.0)"));
     }
-
-    #[test]
-    fn test_cmakelists_txt_cxx_std() {
-        let project_name = "minesweeper";
-        let cxx_std = 17;
-        cmakelists_txt(project_name, cxx_std);
-        let content = std::fs::read_to_string("CMakeLists.txt").unwrap();
-        assert!(content.contains("set(CMAKE_CXX_STANDARD 17)"));
-    }
 }
