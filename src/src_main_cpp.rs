@@ -1,10 +1,23 @@
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
+use std::path::Path;
 
 pub fn src_main_cpp() {
-    let mut file = File::create("./src/main.cpp").unwrap();
+    let src_dir = Path::new("./src");
+    let main_cpp_path = src_dir.join("main.cpp");
+
+    if !src_dir.exists() {
+        fs::create_dir_all(src_dir).expect("Failed to create src directory");
+    }
+
+    if main_cpp_path.exists() {
+        return;
+    }
+
     let content = include_str!("../files/main.cpp");
-    file.write_all(content.as_bytes()).unwrap();
+    let mut file = File::create(&main_cpp_path).expect("Failed to create main.cpp");
+    file.write_all(content.as_bytes())
+        .expect("Failed to write to main.cpp");
 }
 
 #[cfg(test)]
