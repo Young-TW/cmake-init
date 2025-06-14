@@ -41,6 +41,20 @@ fn main() {
                 .default_value("true")
                 .help("Configure .gitignore"),
         )
+        .arg(
+            Arg::new("cuda")
+                .short('c')
+                .long("cuda")
+                .action(ArgAction::SetTrue)
+                .help("Enable CUDA support"),
+        )
+        .arg(
+            Arg::new("hip")
+                .short('i')
+                .long("hip")
+                .action(ArgAction::SetTrue)
+                .help("Enable HIP support"),
+        )
         .get_matches();
 
     let project_name = matches.get_one::<String>("project-name").unwrap();
