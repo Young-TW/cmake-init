@@ -14,13 +14,13 @@ find_package(CUDA REQUIRED)
 
 include_directories(./include)
 
-file(GLOB_RECURSE SRC_FILES ./src/*.cpp)
+file(GLOB_RECURSE SRC_FILES ./src/*.cu)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 install(TARGETS ${PROJECT_NAME})
 
 set_source_files_properties(
-    src/main.cpp
+    src/main.cu
     PROPERTIES LANGUAGE CUDA
 )

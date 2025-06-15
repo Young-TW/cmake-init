@@ -10,8 +10,8 @@ set(CMAKE_HIP_COMPILER /opt/rocm/bin/hipcc)
 
 find_package(HIP REQUIRED)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.hip)
 
-set_source_files_properties(src/main.cpp PROPERTIES LANGUAGE HIP)
+set_source_files_properties(src/main.hip PROPERTIES LANGUAGE HIP)
 
 install(TARGETS ${PROJECT_NAME})
