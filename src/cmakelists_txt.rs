@@ -17,11 +17,6 @@ pub fn cmakelists_txt(project_name: &str, cxx_std: i32, mode: Option<&str>) {
         }
     }
 
-    // Check if the file already exists
-    if std::path::Path::new("CMakeLists.txt").exists() {
-        eprintln!("CMakeLists.txt already exists. Skipping creation.");
-        return;
-    }
     // Replace project_name and cxx_std in the content
     let projname_content = origin_content.replace("{{PROJECT_NAME}}", project_name);
     let content = projname_content.replace("{{cxx_std}}", &cxx_std.to_string());

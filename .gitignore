@@ -1,13 +1,13 @@
-/build
-/dist
+build/
+dist/
 
-/.vscode
-/.idea
-/.cache
+.vscode/
+.idea/
+.cache/
 
 *.DS_Store
 
 *.out
 *.exe
 
-/target
+target/
