@@ -89,19 +89,19 @@ fn main() {
     match mode {
         "CUDA" => {
             src_main_cpp(Some("CUDA")); // External function for creating src/main.cpp
-            cmakelists_txt(project_name, cxx_std); // External function for creating CMakeLists.txt
+            cmakelists_txt(project_name, cxx_std, Some("CUDA")); // External function for creating CMakeLists.txt
             // Additional CUDA-specific setup can be added here
             println!("CUDA support enabled.");
         },
         "HIP" => {
             src_main_cpp(Some("HIP")); // External function for creating src/main.cpp
-            cmakelists_txt(project_name, cxx_std); // External function for creating CMakeLists.txt
+            cmakelists_txt(project_name, cxx_std, Some("HIP")); // External function for creating CMakeLists.txt
             // Additional HIP-specific setup can be added here
             println!("HIP support enabled.");
         },
         _ => {
              src_main_cpp(Some("C++")); // External function for creating src/main.cpp
-             cmakelists_txt(project_name, cxx_std); // External function for creating CMakeLists.txt
+             cmakelists_txt(project_name, cxx_std, Some("C++")); // External function for creating CMakeLists.txt
         },
     }
 
