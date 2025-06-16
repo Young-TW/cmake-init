@@ -4,7 +4,6 @@
 /.vscode
 /.idea
 /.cache
-/target
 
 *.DS_Store
 
