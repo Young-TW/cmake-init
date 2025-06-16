@@ -3,14 +3,14 @@ project({{PROJECT_NAME}} VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD {{cxx_std}})
 
-include_directories(./include)
-
 set(HIP_COMPILER clang)
 set(CMAKE_HIP_COMPILER /opt/rocm/bin/hipcc)
 
 find_package(HIP REQUIRED)
 
-add_executable(${PROJECT_NAME} src/main.hip)
+file(GLOB_RECURSE SRC_FILES ./src/*.hip)
+
+add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 set_source_files_properties(src/main.hip PROPERTIES LANGUAGE HIP)
 
