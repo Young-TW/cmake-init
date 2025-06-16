@@ -2,13 +2,13 @@
 
 #include <stdio.h>
 
-__global__ void helloFromGPU() {
-    printf("Hello from GPU thread %d\n", threadIdx.x);
+__global__ void hello_kernel() {
+    printf("Hello from CUDA kernel!\n");
 }
 
 int main() {
     // Launch the kernel with 10 threads
-    helloFromGPU<<<1, 10>>>();
+    hello_kernel<<<1, 1>>>();
 
     // Wait for GPU to finish before accessing results
     cudaDeviceSynchronize();
