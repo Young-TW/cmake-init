@@ -10,9 +10,25 @@ cargo install --path .
 
 ## Usage
 
+Initialize a simple CMake project with the specified name and options.
+
 ```sh
 cmake-init <PROJECT_NAME>
 ```
+
+Initialize a CMake project with CUDA/HIP support:
+
+```sh
+cmake-init <PROJECT_NAME> --cuda
+```
+
+or
+
+```sh
+cmake-init <PROJECT_NAME> --hip
+```
+
+If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the architecture code for your GPU.
 
 ### Flags
 
