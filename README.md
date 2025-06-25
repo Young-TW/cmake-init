@@ -47,3 +47,11 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 ```sh
 cmake-init my_project -s 20 --gitignore false
 ```
+
+## Contributing
+
+Please see the [Contributing](./CONTRIBUTING.md) document for details on how to contribute to this project.
+
+## Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/cb91f9d845328a1a35e7c4581ac98e14fd2bb352.svg "Repobeats analytics image")
