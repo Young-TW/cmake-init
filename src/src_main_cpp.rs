@@ -29,6 +29,17 @@ pub fn src_main_cpp(mode: Option<&str>) {
                 return;
             }
         }
+        Some("MPI") => {
+            main_path = src_dir.join("main.cpp");
+            content = include_str!("../files/mpi/main.cpp");
+            if !src_dir.exists() {
+                fs::create_dir_all(src_dir).expect("Failed to create src directory");
+            }
+
+            if main_path.exists() {
+                return;
+            }
+        }
         _ => {
             main_path = src_dir.join("main.cpp");
             content = include_str!("../files/main.cpp");

@@ -55,6 +55,13 @@ fn main() {
                 .action(ArgAction::SetTrue)
                 .help("Enable HIP support"),
         )
+        .arg(
+            Arg::new("mpi")
+                .short('m')
+                .long("mpi")
+                .action(ArgAction::SetTrue)
+                .help("Enable OpenMPI support"),
+        )
         .get_matches();
 
     let project_name = matches.get_one::<String>("project-name").unwrap();
@@ -82,6 +89,8 @@ fn main() {
         "CUDA"
     } else if matches.get_flag("hip") {
         "HIP"
+    } else if matches.get_flag("mpi") {
+        "MPI"
     } else {
         "C++"
     };
@@ -98,6 +107,12 @@ fn main() {
             cmakelists_txt(project_name, cxx_std, Some("HIP")); // External function for creating CMakeLists.txt
             // Additional HIP-specific setup can be added here
             println!("HIP support enabled.");
+        },
+        "MPI" => {
+            src_main_cpp(Some("MPI")); // External function for creating src/main.cpp
+            cmakelists_txt(project_name, cxx_std, Some("MPI")); // External function for creating CMakeLists.txt
+            // Additional MPI-specific setup can be added here
+            println!("OpenMPI support enabled.");
         },
         _ => {
              src_main_cpp(Some("C++")); // External function for creating src/main.cpp

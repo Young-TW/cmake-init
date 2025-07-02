@@ -10,4 +10,4 @@ file(GLOB_RECURSE SRC_FILES ./src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
-target_link_libraries(mpi_test MPI::MPI_CXX)
+target_link_libraries(${PROJECT_NAME} MPI::MPI_CXX)

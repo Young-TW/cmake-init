@@ -11,6 +11,9 @@ pub fn cmakelists_txt(project_name: &str, cxx_std: i32, mode: Option<&str>) {
         Some("HIP") => {
             origin_content = include_str!("../files/hip/CMakeLists.txt");
         }
+        Some("MPI") => {
+            origin_content = include_str!("../files/mpi/CMakeLists.txt");
+        }
         _ => {
             origin_content = include_str!("../files/CMakeLists.txt");
 
