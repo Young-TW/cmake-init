@@ -93,27 +93,24 @@ fn main() {
 
     match mode {
         "CUDA" => {
-            src_main_cpp(Some("CUDA")); // External function for creating src/main.cpp
-            cmakelists_txt(project_name, cxx_std, Some("CUDA")); // External function for creating CMakeLists.txt
-            // Additional CUDA-specific setup can be added here
+            src_main_cpp(Some("CUDA"));
+            cmakelists_txt(project_name, cxx_std, Some("CUDA"));
             println!("CUDA support enabled.");
-        },
+        }
         "HIP" => {
-            src_main_cpp(Some("HIP")); // External function for creating src/main.cpp
-            cmakelists_txt(project_name, cxx_std, Some("HIP")); // External function for creating CMakeLists.txt
-            // Additional HIP-specific setup can be added here
+            src_main_cpp(Some("HIP"));
+            cmakelists_txt(project_name, cxx_std, Some("HIP"));
             println!("HIP support enabled.");
-        },
+        }
         "MPI" => {
-            src_main_cpp(Some("MPI")); // External function for creating src/main.cpp
-            cmakelists_txt(project_name, cxx_std, Some("MPI")); // External function for creating CMakeLists.txt
-            // Additional MPI-specific setup can be added here
+            src_main_cpp(Some("MPI"));
+            cmakelists_txt(project_name, cxx_std, Some("MPI"));
             println!("OpenMPI support enabled.");
-        },
+        }
         _ => {
-             src_main_cpp(Some("C++")); // External function for creating src/main.cpp
-             cmakelists_txt(project_name, cxx_std, Some("C++")); // External function for creating CMakeLists.txt
-        },
+            src_main_cpp(Some("C++"));
+            cmakelists_txt(project_name, cxx_std, Some("C++"));
+        }
     }
 
     let configure_gitignore = matches.get_one::<String>("gitignore").unwrap() == "true";

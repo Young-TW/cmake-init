@@ -16,7 +16,6 @@ pub fn cmakelists_txt(project_name: &str, cxx_std: i32, mode: Option<&str>) {
         }
         _ => {
             origin_content = include_str!("../files/CMakeLists.txt");
-
         }
     }
 
