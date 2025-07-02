@@ -65,10 +65,6 @@ fn main() {
         .get_matches();
 
     let project_name = matches.get_one::<String>("project-name").unwrap();
-    println!(
-        "Current path: {}",
-        std::env::current_dir().unwrap().display()
-    );
 
     // Create project directory and set current path
     fs::create_dir_all(project_name).expect("Failed to create project directory");
