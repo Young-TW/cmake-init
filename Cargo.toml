@@ -3,5 +3,13 @@ name = "cmake-init"
 version = "0.1.0"
 edition = "2021"
 
+description = "Initialize CMake project at speed"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/Young-TW/cmake-init"
+homepage = "https://github.com/Young-TW/cmake-init"
+readme = "README.md"
+keywords = ["cmake", "c++", "cuda", "hip", "openmpi", "initializer"]
+categories = ["development-tools", "command-line-utilities"]
+
 [dependencies]
 clap = "4.5.20"
