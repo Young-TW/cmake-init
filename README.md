@@ -41,6 +41,7 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 | `--gitignore`       | `-g`   | `true`  | Generate `.gitignore` file (`true`/`false`)         |
 | `--cuda`            | `-c`   | `false` | Enable CUDA support (`true`/`false`)                |
 | `--hip`             | `-i`   | `false` | Enable HIP support (`true`/`false`)                 |
+| `--mpi`             | `-m`   | `false` | Enable OpenMPI support (`true`/`false`)             |
 
 ### Example
 
