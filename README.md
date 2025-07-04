@@ -40,6 +40,8 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 
 ### Flags
 
+Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the same time.
+
 | Flag                | Short  | Default | Description                                         |
 |---------------------|--------|---------|-----------------------------------------------------|
 | `--help`            | `-h`   |         | Show help message                                   |
