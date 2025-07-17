@@ -42,16 +42,17 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 
 Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the same time.
 
-| Flag                | Short  | Default | Description                                         |
-|---------------------|--------|---------|-----------------------------------------------------|
-| `--help`            | `-h`   |         | Show help message                                   |
-| `--version`         | `-v`   |         | Show version information                            |
-| `<PROJECT_NAME>`    |        | required| Project name                                        |
-| `--cxx-std`         | `-s`   | `17`    | C++ standard (11, 14, 17, 20, 23, 26)               |
-| `--gitignore`       | `-g`   | `true`  | Generate `.gitignore` file (`true`/`false`)         |
-| `--cuda`            | `-c`   | `false` | Enable CUDA support (`true`/`false`)                |
-| `--hip`             | `-i`   | `false` | Enable HIP support (`true`/`false`)                 |
-| `--mpi`             | `-m`   | `false` | Enable OpenMPI support (`true`/`false`)             |
+| Flag             | Short  | Default  | Description                                       |
+| ---------------- | ------ | -------- | ------------------------------------------------- |
+| `--help`         | `-h`   |          | Show help message                                 |
+| `--version`      | `-v`   |          | Show version information                          |
+| `<PROJECT_NAME>` |        | required | Project name                                      |
+| `--cxx-std`      | `-s`   | `17`     | C++ standard (11, 14, 17, 20, 23, 26)             |
+| `--gitignore`    | `-g`   | `true`   | Generate `.gitignore` file (`true`/`false`)       |
+| `--cuda`         | `-c`   | `false`  | Enable CUDA support (`true`/`false`)              |
+| `--hip`          | `-i`   | `false`  | Enable HIP support (`true`/`false`)               |
+| `--mpi`          | `-m`   | `false`  | Enable OpenMPI support (`true`/`false`)           |
+| `--kokkos`       | `-k`   | `false`  | Enable Kokkos support (`true`/`false`)            |
 
 ### Example
 
