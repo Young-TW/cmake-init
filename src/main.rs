@@ -62,6 +62,13 @@ fn main() {
                 .action(ArgAction::SetTrue)
                 .help("Enable OpenMPI support"),
         )
+        .arg(
+            Arg::new("kokkos")
+                .short('k')
+                .long("kokkos")
+                .action(ArgAction::SetTrue)
+                .help("Enable Kokkos support (not implemented yet)"),
+        )
         .get_matches();
 
     let project_name = matches.get_one::<String>("project-name").unwrap();
