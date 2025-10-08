@@ -1,4 +1,6 @@
-# cmake-init
+# cmake-init - Initialize CMake project at speed
+
+cmake-init is a command-line tool written in Rust that helps you quickly set up a CMake project with various options such as CUDA, HIP, MPI, and Kokkos support.
 
 ![CI/CD](https://github.com/Young-TW/cmake-init/actions/workflows/rust.yml/badge.svg)
 
