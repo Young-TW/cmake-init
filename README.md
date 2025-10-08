@@ -1,5 +1,7 @@
 # cmake-init
 
+![CI/CD](https://github.com/Young-TW/cmake-init/actions/workflows/rust.yml/badge.svg)
+
 ## Installation
 
 ### Via Cargo
