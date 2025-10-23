@@ -12,4 +12,4 @@ keywords = ["cmake", "c++", "cuda", "hip", "openmpi"]
 categories = ["development-tools", "command-line-utilities"]
 
 [dependencies]
-clap = "4.5.20"
+clap = "4.5.50"
