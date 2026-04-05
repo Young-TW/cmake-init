@@ -3,7 +3,7 @@ project({{PROJECT_NAME}} VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD {{cxx_std}})
 
-file(GLOB_RECURSE SRC_FILES ./src/*.cpp)
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS/src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
