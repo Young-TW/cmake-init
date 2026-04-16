@@ -3,24 +3,13 @@ use std::fs;
 
 use cmake_init::_gitignore::gitignore;
 use cmake_init::cmakelists_txt::cmakelists_txt;
+use cmake_init::git::git_init;
 use cmake_init::src_main_cpp::src_main_cpp;
 
 fn main() {
     let matches = Command::new("cmake-init")
         .version("0.1.0")
         .about("A simple CMake project initializer")
-        .arg(
-            Arg::new("help")
-                .short('h')
-                .long("help")
-                .action(ArgAction::Help),
-        )
-        .arg(
-            Arg::new("version")
-                .short('v')
-                .long("version")
-                .action(ArgAction::Version),
-        )
         .arg(
             Arg::new("project-name")
                 .index(1)
@@ -68,6 +57,12 @@ fn main() {
                 .long("kokkos")
                 .action(ArgAction::SetTrue)
                 .help("Enable Kokkos support (not implemented yet)"),
+        )
+        .arg(
+            Arg::new("git")
+                .long("git")
+                .action(ArgAction::SetTrue)
+                .help("Initialize Git repository"),
         )
         .get_matches();
 
@@ -123,6 +118,10 @@ fn main() {
     let configure_gitignore = matches.get_one::<String>("gitignore").unwrap() == "true";
     if configure_gitignore {
         gitignore();
+    }
+
+    if matches.get_flag("git") {
+        git_init();
     }
 
     println!("All done!");
