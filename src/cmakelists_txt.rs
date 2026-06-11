@@ -24,3 +24,32 @@ pub fn cmakelists_txt(project_name: &str, cxx_std: i32, mode: Option<&str>) {
     let content = projname_content.replace("{{cxx_std}}", &cxx_std.to_string());
     file.write_all(content.as_bytes()).unwrap();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_util::in_temp_dir;
+
+    #[test]
+    fn test_cmakelists_substitutes_placeholders() {
+        in_temp_dir(|| {
+            cmakelists_txt("my_project", 20, Some("C++"));
+            let content = std::fs::read_to_string("CMakeLists.txt").unwrap();
+            assert!(content.contains("project(my_project"));
+            assert!(content.contains("set(CMAKE_CXX_STANDARD 20)"));
+            // Placeholders must be fully replaced.
+            assert!(!content.contains("{{PROJECT_NAME}}"));
+            assert!(!content.contains("{{cxx_std}}"));
+        });
+    }
+
+    #[test]
+    fn test_cmakelists_cuda_template() {
+        in_temp_dir(|| {
+            cmakelists_txt("cuda_proj", 17, Some("CUDA"));
+            let content = std::fs::read_to_string("CMakeLists.txt").unwrap();
+            assert!(content.contains("cuda_proj"));
+            assert!(!content.contains("{{cxx_std}}"));
+        });
+    }
+}
