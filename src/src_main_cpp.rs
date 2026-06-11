@@ -61,25 +61,54 @@ pub fn src_main_cpp(mode: Option<&str>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_util::in_temp_dir;
 
     #[test]
     fn test_src_main_cpp() {
-        src_main_cpp(Some("C++"));
-        let content = std::fs::read_to_string("./src/main.cpp").unwrap();
-        assert!(content.contains("int main(int argc, char* argv[]) {"));
+        in_temp_dir(|| {
+            src_main_cpp(Some("C++"));
+            let content = std::fs::read_to_string("./src/main.cpp").unwrap();
+            assert!(content.contains("int main(int argc, char* argv[]) {"));
+        });
     }
 
     #[test]
     fn test_src_main_cuda() {
-        src_main_cpp(Some("CUDA"));
-        let content = std::fs::read_to_string("./src/main.cu").unwrap();
-        assert!(content.contains("__global__"));
+        in_temp_dir(|| {
+            src_main_cpp(Some("CUDA"));
+            let content = std::fs::read_to_string("./src/main.cu").unwrap();
+            assert!(content.contains("__global__"));
+        });
     }
 
     #[test]
     fn test_src_main_hip() {
-        src_main_cpp(Some("HIP"));
-        let content = std::fs::read_to_string("./src/main.hip").unwrap();
-        assert!(content.contains("__global__"));
+        in_temp_dir(|| {
+            src_main_cpp(Some("HIP"));
+            let content = std::fs::read_to_string("./src/main.hip").unwrap();
+            assert!(content.contains("__global__"));
+        });
+    }
+
+    #[test]
+    fn test_src_main_mpi() {
+        in_temp_dir(|| {
+            src_main_cpp(Some("MPI"));
+            let content = std::fs::read_to_string("./src/main.cpp").unwrap();
+            assert!(content.contains("MPI_Init"));
+        });
+    }
+
+    #[test]
+    fn test_src_main_existing_file_is_preserved() {
+        in_temp_dir(|| {
+            // First call writes the template; a second call must not overwrite an
+            // already-present main file.
+            src_main_cpp(Some("C++"));
+            std::fs::write("./src/main.cpp", "custom content").unwrap();
+            src_main_cpp(Some("C++"));
+            let content = std::fs::read_to_string("./src/main.cpp").unwrap();
+            assert_eq!(content, "custom content");
+        });
     }
 }

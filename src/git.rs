@@ -17,3 +17,22 @@ pub fn git_init() {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_util::in_temp_dir;
+
+    #[test]
+    fn test_git_init_creates_repository() {
+        // Skip when git is unavailable so the suite stays portable.
+        if Command::new("git").arg("--version").output().is_err() {
+            return;
+        }
+
+        in_temp_dir(|| {
+            git_init();
+            assert!(std::path::Path::new(".git").exists());
+        });
+    }
+}

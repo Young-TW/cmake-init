@@ -10,11 +10,14 @@ pub fn gitignore() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_util::in_temp_dir;
 
     #[test]
     fn test_gitignore() {
-        gitignore();
-        let content = std::fs::read_to_string(".gitignore").unwrap();
-        assert!(content.contains("build"));
+        in_temp_dir(|| {
+            gitignore();
+            let content = std::fs::read_to_string(".gitignore").unwrap();
+            assert!(content.contains("build"));
+        });
     }
 }
