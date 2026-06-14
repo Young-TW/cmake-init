@@ -61,20 +61,22 @@ fn main() {
 
     let project_name = matches.get_one::<String>("project-name").unwrap();
 
+    // Validate inputs before creating anything on disk so a bad value does
+    // not leave a stray, empty project directory behind.
+    let cxx_std_raw = matches.get_one::<String>("cxx-std").unwrap();
+    let cxx_std: i32 = match cxx_std_raw.parse() {
+        Ok(value) if [11, 14, 17, 20, 23, 26].contains(&value) => value,
+        _ => {
+            eprintln!(
+                "Invalid C++ standard '{cxx_std_raw}'. Please select 11, 14, 17, 20, 23, or 26."
+            );
+            std::process::exit(1);
+        }
+    };
+
     // Create project directory and set current path
     fs::create_dir_all(project_name).expect("Failed to create project directory");
     std::env::set_current_dir(project_name).expect("Failed to change directory");
-
-    let cxx_std: i32 = matches
-        .get_one::<String>("cxx-std")
-        .unwrap()
-        .parse()
-        .expect("Invalid C++ standard");
-
-    if ![11, 14, 17, 20, 23, 26].contains(&cxx_std) {
-        eprintln!("Invalid C++ standard. Please select 11, 14, 17, 20, 23, or 26.");
-        return;
-    }
 
     let mode = if matches.get_flag("cuda") {
         "CUDA"
