@@ -56,7 +56,6 @@ Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the 
 | `--cuda`         | `-c`   | `false`  | Enable CUDA support (`true`/`false`)              |
 | `--hip`          | `-i`   | `false`  | Enable HIP support (`true`/`false`)               |
 | `--mpi`          | `-m`   | `false`  | Enable OpenMPI support (`true`/`false`)           |
-| `--kokkos`       | `-k`   | `false`  | Enable Kokkos support (`true`/`false`)            |
 
 ### Example
 

@@ -52,13 +52,6 @@ fn main() {
                 .help("Enable OpenMPI support"),
         )
         .arg(
-            Arg::new("kokkos")
-                .short('k')
-                .long("kokkos")
-                .action(ArgAction::SetTrue)
-                .help("Enable Kokkos support (not implemented yet)"),
-        )
-        .arg(
             Arg::new("git")
                 .long("git")
                 .action(ArgAction::SetTrue)
