@@ -3,6 +3,7 @@ pub mod cmakelists;
 pub mod cmakelists_txt;
 pub mod features;
 pub mod git;
+pub mod sources;
 pub mod src_main_cpp;
 
 #[cfg(test)]
