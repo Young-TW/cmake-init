@@ -1,4 +1,5 @@
 pub mod _gitignore;
+pub mod cmakelists;
 pub mod cmakelists_txt;
 pub mod features;
 pub mod git;
