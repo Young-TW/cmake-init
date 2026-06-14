@@ -1,10 +1,13 @@
 use clap::{Arg, ArgAction, Command};
 use std::fs;
+use std::fs::File;
+use std::io::Write;
 
 use cmake_init::_gitignore::gitignore;
-use cmake_init::cmakelists_txt::cmakelists_txt;
+use cmake_init::cmakelists;
+use cmake_init::features::Features;
 use cmake_init::git::git_init;
-use cmake_init::src_main_cpp::src_main_cpp;
+use cmake_init::sources::write_sources;
 
 fn main() {
     let matches = Command::new("cmake-init")
@@ -78,36 +81,27 @@ fn main() {
     fs::create_dir_all(project_name).expect("Failed to create project directory");
     std::env::set_current_dir(project_name).expect("Failed to change directory");
 
-    let mode = if matches.get_flag("cuda") {
-        "CUDA"
-    } else if matches.get_flag("hip") {
-        "HIP"
-    } else if matches.get_flag("mpi") {
-        "MPI"
-    } else {
-        "C++"
+    let features = Features {
+        mpi: matches.get_flag("mpi"),
+        cuda: matches.get_flag("cuda"),
+        hip: matches.get_flag("hip"),
     };
 
-    match mode {
-        "CUDA" => {
-            src_main_cpp(Some("CUDA"));
-            cmakelists_txt(project_name, cxx_std, Some("CUDA"));
-            println!("CUDA support enabled.");
-        }
-        "HIP" => {
-            src_main_cpp(Some("HIP"));
-            cmakelists_txt(project_name, cxx_std, Some("HIP"));
-            println!("HIP support enabled.");
-        }
-        "MPI" => {
-            src_main_cpp(Some("MPI"));
-            cmakelists_txt(project_name, cxx_std, Some("MPI"));
-            println!("OpenMPI support enabled.");
-        }
-        _ => {
-            src_main_cpp(Some("C++"));
-            cmakelists_txt(project_name, cxx_std, Some("C++"));
-        }
+    write_sources(&features);
+
+    let cmakelists = cmakelists::render(project_name, cxx_std, &features);
+    File::create("CMakeLists.txt")
+        .and_then(|mut file| file.write_all(cmakelists.as_bytes()))
+        .expect("Failed to write CMakeLists.txt");
+
+    if features.cuda {
+        println!("CUDA support enabled.");
+    }
+    if features.hip {
+        println!("HIP support enabled.");
+    }
+    if features.mpi {
+        println!("OpenMPI support enabled.");
     }
 
     let configure_gitignore = matches.get_one::<String>("gitignore").unwrap() == "true";
