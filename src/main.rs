@@ -8,7 +8,7 @@ use cmake_init::src_main_cpp::src_main_cpp;
 
 fn main() {
     let matches = Command::new("cmake-init")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .about("A simple CMake project initializer")
         .arg(
             Arg::new("project-name")
