@@ -5,7 +5,7 @@ use std::io::Write;
 
 use cmake_init::_gitignore::gitignore;
 use cmake_init::cmakelists;
-use cmake_init::features::Features;
+use cmake_init::features::{Backend, Features};
 use cmake_init::git::git_init;
 use cmake_init::sources::write_sources;
 
@@ -81,10 +81,18 @@ fn main() {
     fs::create_dir_all(project_name).expect("Failed to create project directory");
     std::env::set_current_dir(project_name).expect("Failed to change directory");
 
+    // Collect backends in canonical order (CUDA before HIP) so derived target
+    // names and emitted CMake sections stay stable.
+    let mut backends = Vec::new();
+    if matches.get_flag("cuda") {
+        backends.push(Backend::Cuda);
+    }
+    if matches.get_flag("hip") {
+        backends.push(Backend::Hip);
+    }
     let features = Features {
         mpi: matches.get_flag("mpi"),
-        cuda: matches.get_flag("cuda"),
-        hip: matches.get_flag("hip"),
+        backends,
     };
 
     write_sources(&features);
@@ -94,10 +102,10 @@ fn main() {
         .and_then(|mut file| file.write_all(cmakelists.as_bytes()))
         .expect("Failed to write CMakeLists.txt");
 
-    if features.cuda {
+    if features.has(Backend::Cuda) {
         println!("CUDA support enabled.");
     }
-    if features.hip {
+    if features.has(Backend::Hip) {
         println!("HIP support enabled.");
     }
     if features.mpi {

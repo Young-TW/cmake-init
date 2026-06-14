@@ -39,11 +39,13 @@ impl Backend {
 }
 
 /// The capabilities requested for a project.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Features {
+    /// Whether every target links against MPI.
     pub mpi: bool,
-    pub cuda: bool,
-    pub hip: bool,
+    /// The GPU backends to build, in a stable canonical order (CUDA before
+    /// HIP).
+    pub backends: Vec<Backend>,
 }
 
 /// A single executable the generated CMake project should build.
@@ -59,16 +61,9 @@ pub struct Target {
 }
 
 impl Features {
-    /// The GPU backends enabled, in a stable order (CUDA before HIP).
-    pub fn backends(&self) -> Vec<Backend> {
-        let mut backends = Vec::new();
-        if self.cuda {
-            backends.push(Backend::Cuda);
-        }
-        if self.hip {
-            backends.push(Backend::Hip);
-        }
-        backends
+    /// Whether `backend` is enabled for this project.
+    pub fn has(&self, backend: Backend) -> bool {
+        self.backends.contains(&backend)
     }
 
     /// Derive the executables to build for `project_name`.
@@ -80,8 +75,7 @@ impl Features {
     ///
     /// MPI, when enabled, applies to every target.
     pub fn targets(&self, project_name: &str) -> Vec<Target> {
-        let backends = self.backends();
-        match backends.as_slice() {
+        match self.backends.as_slice() {
             [] => vec![Target {
                 name: project_name.to_string(),
                 backend: None,
@@ -92,7 +86,8 @@ impl Features {
                 backend: Some(*single),
                 mpi: self.mpi,
             }],
-            _ => backends
+            _ => self
+                .backends
                 .iter()
                 .map(|backend| Target {
                     name: format!("{project_name}_{}", backend.suffix()),
@@ -134,7 +129,7 @@ mod tests {
     #[test]
     fn single_backend_keeps_project_name() {
         let cuda = Features {
-            cuda: true,
+            backends: vec![Backend::Cuda],
             ..Default::default()
         };
         assert_eq!(
@@ -143,7 +138,7 @@ mod tests {
         );
 
         let hip = Features {
-            hip: true,
+            backends: vec![Backend::Hip],
             ..Default::default()
         };
         assert_eq!(
@@ -156,8 +151,7 @@ mod tests {
     fn mpi_modifies_single_backend_target() {
         let f = Features {
             mpi: true,
-            cuda: true,
-            ..Default::default()
+            backends: vec![Backend::Cuda],
         };
         assert_eq!(
             f.targets("proj"),
@@ -168,8 +162,7 @@ mod tests {
     #[test]
     fn cuda_and_hip_split_into_two_suffixed_targets() {
         let f = Features {
-            cuda: true,
-            hip: true,
+            backends: vec![Backend::Cuda, Backend::Hip],
             ..Default::default()
         };
         assert_eq!(
@@ -185,8 +178,7 @@ mod tests {
     fn mpi_cuda_hip_yields_two_mpi_aware_targets() {
         let f = Features {
             mpi: true,
-            cuda: true,
-            hip: true,
+            backends: vec![Backend::Cuda, Backend::Hip],
         };
         assert_eq!(
             f.targets("proj"),
@@ -198,12 +190,12 @@ mod tests {
     }
 
     #[test]
-    fn backends_are_ordered_cuda_before_hip() {
+    fn has_reports_enabled_backends() {
         let f = Features {
-            cuda: true,
-            hip: true,
+            backends: vec![Backend::Cuda],
             ..Default::default()
         };
-        assert_eq!(f.backends(), vec![Backend::Cuda, Backend::Hip]);
+        assert!(f.has(Backend::Cuda));
+        assert!(!f.has(Backend::Hip));
     }
 }

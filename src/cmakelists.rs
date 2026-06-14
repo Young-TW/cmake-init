@@ -12,14 +12,18 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
 
     // HIP as a first-class CMake language requires 3.21; 3.20 is enough
     // otherwise.
-    let min_version = if features.hip { "3.21.0" } else { "3.20.0" };
+    let min_version = if features.has(Backend::Hip) {
+        "3.21.0"
+    } else {
+        "3.20.0"
+    };
     out.push_str(&format!("cmake_minimum_required(VERSION {min_version})\n"));
 
     let mut languages = vec!["CXX"];
-    if features.cuda {
+    if features.has(Backend::Cuda) {
         languages.push("CUDA");
     }
-    if features.hip {
+    if features.has(Backend::Hip) {
         languages.push("HIP");
     }
     out.push_str(&format!(
@@ -30,11 +34,11 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     out.push_str(&format!("set(CMAKE_CXX_STANDARD {cxx_std})\n"));
     out.push_str("set(CMAKE_CXX_STANDARD_REQUIRED ON)\n");
 
-    if features.cuda {
+    if features.has(Backend::Cuda) {
         out.push_str("\n# Set to your GPU's compute capability (e.g. 80 for Ampere).\n");
         out.push_str("set(CMAKE_CUDA_ARCHITECTURES 80)\n");
     }
-    if features.hip {
+    if features.has(Backend::Hip) {
         out.push_str("\n# Set to your GPU's architecture (e.g. gfx1100).\n");
         out.push_str("set(CMAKE_HIP_ARCHITECTURES gfx906)\n");
     }
@@ -46,10 +50,10 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     // Glob each language's sources separately so targets can pick the kernel
     // flavour they need while sharing the C++ entry point.
     out.push_str("\nfile(GLOB_RECURSE CXX_SOURCES CONFIGURE_DEPENDS ./src/*.cpp)\n");
-    if features.cuda {
+    if features.has(Backend::Cuda) {
         out.push_str("file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS ./src/*.cu)\n");
     }
-    if features.hip {
+    if features.has(Backend::Hip) {
         out.push_str("file(GLOB_RECURSE HIP_SOURCES CONFIGURE_DEPENDS ./src/*.hip)\n");
     }
 
@@ -78,7 +82,14 @@ mod tests {
     use super::*;
 
     fn feats(mpi: bool, cuda: bool, hip: bool) -> Features {
-        Features { mpi, cuda, hip }
+        let mut backends = Vec::new();
+        if cuda {
+            backends.push(Backend::Cuda);
+        }
+        if hip {
+            backends.push(Backend::Hip);
+        }
+        Features { mpi, backends }
     }
 
     #[test]

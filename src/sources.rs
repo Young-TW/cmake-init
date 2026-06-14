@@ -10,7 +10,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 
-use crate::features::Features;
+use crate::features::{Backend, Features};
 
 const KERNEL_CU: &str = include_str!("../files/cuda/kernel.cu");
 const KERNEL_HIP: &str = include_str!("../files/hip/kernel.hip");
@@ -23,10 +23,10 @@ pub fn write_sources(features: &Features) {
 
     write_if_absent(&src_dir.join("main.cpp"), &render_main_cpp(features));
 
-    if features.cuda {
+    if features.has(Backend::Cuda) {
         write_if_absent(&src_dir.join("kernel.cu"), KERNEL_CU);
     }
-    if features.hip {
+    if features.has(Backend::Hip) {
         write_if_absent(&src_dir.join("kernel.hip"), KERNEL_HIP);
     }
 }
@@ -46,7 +46,7 @@ fn write_if_absent(path: &Path, content: &str) {
 /// initializes MPI when requested and calls `run_kernel()` when a GPU backend
 /// is enabled.
 fn render_main_cpp(features: &Features) -> String {
-    let has_backend = features.cuda || features.hip;
+    let has_backend = !features.backends.is_empty();
 
     let mut out = String::from("#include <iostream>\n");
     if features.mpi {
@@ -92,7 +92,14 @@ mod tests {
     use crate::test_util::in_temp_dir;
 
     fn feats(mpi: bool, cuda: bool, hip: bool) -> Features {
-        Features { mpi, cuda, hip }
+        let mut backends = Vec::new();
+        if cuda {
+            backends.push(Backend::Cuda);
+        }
+        if hip {
+            backends.push(Backend::Hip);
+        }
+        Features { mpi, backends }
     }
 
     #[test]
