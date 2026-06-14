@@ -44,7 +44,7 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 
 ### Flags
 
-Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the same time.
+`--cuda`, `--hip` and `--mpi` are composable; see [Backend combinations](#backend-combinations) below.
 
 | Flag             | Short  | Default  | Description                                       |
 | ---------------- | ------ | -------- | ------------------------------------------------- |
@@ -57,6 +57,30 @@ Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the 
 | `--hip`          | `-i`   | `false`  | Enable HIP support (`true`/`false`)               |
 | `--mpi`          | `-m`   | `false`  | Enable OpenMPI support (`true`/`false`)           |
 | `--git`          |        | `true`   | Initialize a Git repository (`true`/`false`)      |
+
+### Backend combinations
+
+`--cuda`, `--hip` and `--mpi` can be combined freely. The generated project
+always has a backend-agnostic C++ entry point (`src/main.cpp`); each GPU backend
+adds its own kernel file (`src/kernel.cu` / `src/kernel.hip`) that defines
+`run_kernel()`. MPI links every target against `MPI::MPI_CXX`.
+
+Because CUDA and HIP cannot share a single target, enabling both produces two
+executables; otherwise a single executable named after the project is built.
+
+| Flags                  | Targets                                            |
+| ---------------------- | -------------------------------------------------- |
+| *(none)*               | `name` (C++)                                        |
+| `--cuda`               | `name` (C++ + CUDA kernel)                          |
+| `--hip`                | `name` (C++ + HIP kernel)                           |
+| `--mpi`                | `name` (C++, MPI-linked)                            |
+| `--mpi --cuda`         | `name` (CUDA, MPI-linked)                           |
+| `--mpi --hip`          | `name` (HIP, MPI-linked)                            |
+| `--cuda --hip`         | `name_cuda`, `name_hip`                             |
+| `--mpi --cuda --hip`   | `name_cuda`, `name_hip` (both MPI-linked)           |
+
+Enabling HIP raises the generated `cmake_minimum_required` to 3.21 (the first
+CMake release with first-class HIP language support).
 
 ### Example
 
