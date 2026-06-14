@@ -56,7 +56,7 @@ Currently, not supporting multiple flags in (`--cuda`, `--hip`, `--mpi`) at the 
 | `--cuda`         | `-c`   | `false`  | Enable CUDA support (`true`/`false`)              |
 | `--hip`          | `-i`   | `false`  | Enable HIP support (`true`/`false`)               |
 | `--mpi`          | `-m`   | `false`  | Enable OpenMPI support (`true`/`false`)           |
-| `--git`          |        | `false`  | Initialize a Git repository (`git init`)          |
+| `--git`          |        | `true`   | Initialize a Git repository (`true`/`false`)      |
 
 ### Example
 

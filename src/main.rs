@@ -54,8 +54,8 @@ fn main() {
         .arg(
             Arg::new("git")
                 .long("git")
-                .action(ArgAction::SetTrue)
-                .help("Initialize Git repository"),
+                .default_value("true")
+                .help("Initialize Git repository (`true`/`false`)"),
         )
         .get_matches();
 
@@ -113,7 +113,8 @@ fn main() {
         gitignore();
     }
 
-    if matches.get_flag("git") {
+    let configure_git = matches.get_one::<String>("git").unwrap() == "true";
+    if configure_git {
         git_init();
     }
 
