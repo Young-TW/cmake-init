@@ -66,6 +66,11 @@ fn main() {
 
     // Validate inputs before creating anything on disk so a bad value does
     // not leave a stray, empty project directory behind.
+    if let Err(msg) = cmake_init::validate_project_name(project_name) {
+        eprintln!("{msg}");
+        std::process::exit(1);
+    }
+
     let cxx_std_raw = matches.get_one::<String>("cxx-std").unwrap();
     let cxx_std: i32 = match cxx_std_raw.parse() {
         Ok(value) if [11, 14, 17, 20, 23, 26].contains(&value) => value,
