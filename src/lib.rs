@@ -4,6 +4,65 @@ pub mod features;
 pub mod git;
 pub mod sources;
 
+/// Returns `Ok(())` when `name` is a valid CMake project identifier.
+///
+/// Accepted characters: ASCII letters (`A–Z`, `a–z`), digits (`0–9`),
+/// hyphens (`-`), and underscores (`_`).  Spaces, parentheses, semicolons,
+/// quotes, and other shell/CMake special characters are rejected because
+/// CMake parses the `project(...)` argument list as whitespace-separated
+/// tokens and treats several punctuation characters as syntax.
+pub fn validate_project_name(name: &str) -> Result<(), String> {
+    if name.is_empty() {
+        return Err("Project name must not be empty.".to_string());
+    }
+    if name
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        Ok(())
+    } else {
+        Err(format!(
+            "Invalid project name '{name}'. \
+             Accepted characters: ASCII letters, digits, hyphens (-), and underscores (_)."
+        ))
+    }
+}
+
+#[cfg(test)]
+mod name_validation_tests {
+    use super::validate_project_name;
+
+    #[test]
+    fn valid_names_are_accepted() {
+        assert!(validate_project_name("myproject").is_ok());
+        assert!(validate_project_name("my_project").is_ok());
+        assert!(validate_project_name("my-project").is_ok());
+        assert!(validate_project_name("MyProject42").is_ok());
+        assert!(validate_project_name("_internal").is_ok());
+        assert!(validate_project_name("a-b_c-D3").is_ok());
+    }
+
+    #[test]
+    fn space_is_rejected() {
+        assert!(validate_project_name("my project").is_err());
+    }
+
+    #[test]
+    fn open_paren_is_rejected() {
+        assert!(validate_project_name("proj(x)").is_err());
+    }
+
+    #[test]
+    fn semicolon_is_rejected() {
+        assert!(validate_project_name("proj;bad").is_err());
+    }
+
+    #[test]
+    fn empty_name_is_rejected() {
+        assert!(validate_project_name("").is_err());
+    }
+}
+
 #[cfg(test)]
 pub mod test_util {
     use std::sync::atomic::{AtomicUsize, Ordering};
