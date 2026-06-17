@@ -7,6 +7,7 @@ use cmake_init::_gitignore::gitignore;
 use cmake_init::cmakelists;
 use cmake_init::features::{Backend, Features};
 use cmake_init::git::git_init;
+use cmake_init::parse_bool_flag;
 use cmake_init::sources::write_sources;
 
 fn main() {
@@ -31,7 +32,8 @@ fn main() {
                 .short('g')
                 .long("gitignore")
                 .default_value("true")
-                .help("Configure .gitignore"),
+                .value_parser(parse_bool_flag)
+                .help("Configure .gitignore (true/false/yes/no/on/off/1/0)"),
         )
         .arg(
             Arg::new("cuda")
@@ -58,7 +60,8 @@ fn main() {
             Arg::new("git")
                 .long("git")
                 .default_value("true")
-                .help("Initialize Git repository (`true`/`false`)"),
+                .value_parser(parse_bool_flag)
+                .help("Initialize Git repository (true/false/yes/no/on/off/1/0)"),
         )
         .get_matches();
 
@@ -117,13 +120,11 @@ fn main() {
         println!("OpenMPI support enabled.");
     }
 
-    let configure_gitignore = matches.get_one::<String>("gitignore").unwrap() == "true";
-    if configure_gitignore {
+    if *matches.get_one::<bool>("gitignore").unwrap() {
         gitignore();
     }
 
-    let configure_git = matches.get_one::<String>("git").unwrap() == "true";
-    if configure_git {
+    if *matches.get_one::<bool>("git").unwrap() {
         git_init();
     }
 

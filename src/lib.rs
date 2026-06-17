@@ -4,6 +4,18 @@ pub mod features;
 pub mod git;
 pub mod sources;
 
+/// Parses a boolean flag value, accepting common truthy/falsy spellings
+/// case-insensitively: `true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`.
+pub fn parse_bool_flag(s: &str) -> Result<bool, String> {
+    match s.to_lowercase().as_str() {
+        "true" | "yes" | "on" | "1" => Ok(true),
+        "false" | "no" | "off" | "0" => Ok(false),
+        _ => Err(format!(
+            "invalid boolean value '{s}': expected true/false, yes/no, on/off, or 1/0"
+        )),
+    }
+}
+
 /// Returns `Ok(())` when `name` is a valid CMake project identifier.
 ///
 /// Accepted characters: ASCII letters (`A–Z`, `a–z`), digits (`0–9`),
@@ -25,6 +37,41 @@ pub fn validate_project_name(name: &str) -> Result<(), String> {
             "Invalid project name '{name}'. \
              Accepted characters: ASCII letters, digits, hyphens (-), and underscores (_)."
         ))
+    }
+}
+
+#[cfg(test)]
+mod bool_flag_tests {
+    use super::parse_bool_flag;
+
+    #[test]
+    fn accepts_true_variants() {
+        assert_eq!(parse_bool_flag("true"), Ok(true));
+        assert_eq!(parse_bool_flag("True"), Ok(true));
+        assert_eq!(parse_bool_flag("TRUE"), Ok(true));
+        assert_eq!(parse_bool_flag("yes"), Ok(true));
+        assert_eq!(parse_bool_flag("Yes"), Ok(true));
+        assert_eq!(parse_bool_flag("on"), Ok(true));
+        assert_eq!(parse_bool_flag("1"), Ok(true));
+    }
+
+    #[test]
+    fn accepts_false_variants() {
+        assert_eq!(parse_bool_flag("false"), Ok(false));
+        assert_eq!(parse_bool_flag("False"), Ok(false));
+        assert_eq!(parse_bool_flag("FALSE"), Ok(false));
+        assert_eq!(parse_bool_flag("no"), Ok(false));
+        assert_eq!(parse_bool_flag("No"), Ok(false));
+        assert_eq!(parse_bool_flag("off"), Ok(false));
+        assert_eq!(parse_bool_flag("0"), Ok(false));
+    }
+
+    #[test]
+    fn rejects_unrecognised_values() {
+        assert!(parse_bool_flag("maybe").is_err());
+        assert!(parse_bool_flag("2").is_err());
+        assert!(parse_bool_flag("").is_err());
+        assert!(parse_bool_flag("enabled").is_err());
     }
 }
 
