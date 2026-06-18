@@ -1,3 +1,10 @@
+//! `cmake-init` command-line entry point.
+//!
+//! Parses CLI arguments, validates them, creates a project directory named
+//! after the project, and populates it with generated sources, a
+//! `CMakeLists.txt`, and optionally a `.gitignore` and an initialized Git
+//! repository.
+
 use clap::{Arg, ArgAction, Command};
 use std::fs;
 use std::fs::File;
