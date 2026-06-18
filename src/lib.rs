@@ -1,3 +1,10 @@
+//! Library backing the `cmake-init` command-line tool.
+//!
+//! It scaffolds a CMake C++ project: generating sources, a `CMakeLists.txt`,
+//! and optional `.gitignore` and Git repository. The modules cover each
+//! generated artifact, while this root provides the shared CLI input
+//! validators [`parse_bool_flag`] and [`validate_project_name`].
+
 pub mod _gitignore;
 pub mod cmakelists;
 pub mod features;

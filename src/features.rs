@@ -7,7 +7,9 @@
 /// A GPU backend that compiles its own kernel sources into a target.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Backend {
+    /// NVIDIA CUDA backend.
     Cuda,
+    /// AMD HIP backend.
     Hip,
 }
 

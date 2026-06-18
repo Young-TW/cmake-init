@@ -1,5 +1,12 @@
+//! Initializes a Git repository in the current directory.
+
 use std::process::Command;
 
+/// Runs `git init` in the current directory.
+///
+/// Reports the outcome to standard output on success, or to standard error if
+/// `git` exits with a failure status or cannot be executed (for example, when
+/// `git` is not installed). Errors are not propagated to the caller.
 pub fn git_init() {
     let output = Command::new("git").arg("init").output();
 
