@@ -10,9 +10,11 @@ use crate::features::{Backend, Features};
 pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     let mut out = String::new();
 
-    // HIP as a first-class CMake language requires 3.21; 3.20 is enough
-    // otherwise.
-    let min_version = if features.has(Backend::Hip) {
+    // CUDA's `native` architecture detection requires 3.24; HIP as a
+    // first-class CMake language requires 3.21; 3.20 is enough otherwise.
+    let min_version = if features.has(Backend::Cuda) {
+        "3.24.0"
+    } else if features.has(Backend::Hip) {
         "3.21.0"
     } else {
         "3.20.0"
@@ -35,8 +37,8 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     out.push_str("set(CMAKE_CXX_STANDARD_REQUIRED ON)\n");
 
     if features.has(Backend::Cuda) {
-        out.push_str("\n# Set to your GPU's compute capability (e.g. 80 for Ampere).\n");
-        out.push_str("set(CMAKE_CUDA_ARCHITECTURES 80)\n");
+        out.push_str("\n# Detect the architecture(s) of the GPU(s) present at configure time.\n");
+        out.push_str("set(CMAKE_CUDA_ARCHITECTURES native)\n");
     }
     if features.has(Backend::Hip) {
         out.push_str("\n# Set to your GPU's architecture (e.g. gfx1100).\n");
@@ -118,9 +120,34 @@ mod tests {
     fn cuda_enables_language_and_globs_kernels() {
         let out = render("proj", 17, &feats(false, true, false));
         assert!(out.contains("LANGUAGES CXX CUDA)"));
-        assert!(out.contains("set(CMAKE_CUDA_ARCHITECTURES 80)"));
+        assert!(out.contains("set(CMAKE_CUDA_ARCHITECTURES native)"));
         assert!(out.contains("file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS ./src/*.cu)"));
         assert!(out.contains("add_executable(proj ${CXX_SOURCES} ${CUDA_SOURCES})"));
+    }
+
+    // Regression test for GitHub issue #8: CUDA projects hard-coded
+    // CMAKE_CUDA_ARCHITECTURES to 80 (Ampere), silently miscompiling on other
+    // GPUs. The expected behaviour is `native`, which queries the installed GPU
+    // at configure time, with the minimum CMake version bumped to 3.24 (the
+    // first release that supports `native`).
+    #[test]
+    fn cuda_uses_native_architectures() {
+        let out = render("proj", 17, &feats(false, true, false));
+        assert!(
+            out.contains("set(CMAKE_CUDA_ARCHITECTURES native)"),
+            "CUDA architectures should default to `native`, not a hard-coded \
+             value; generated output was:\n{out}"
+        );
+        assert!(
+            !out.contains("set(CMAKE_CUDA_ARCHITECTURES 80)"),
+            "CUDA architectures should not be hard-coded to 80 (Ampere); \
+             generated output was:\n{out}"
+        );
+        assert!(
+            out.contains("cmake_minimum_required(VERSION 3.24.0)"),
+            "CUDA projects require CMake 3.24+ for `native`; generated output \
+             was:\n{out}"
+        );
     }
 
     #[test]
@@ -135,7 +162,7 @@ mod tests {
     #[test]
     fn cuda_and_hip_emit_two_suffixed_targets() {
         let out = render("proj", 17, &feats(false, true, true));
-        assert!(out.contains("cmake_minimum_required(VERSION 3.21.0)"));
+        assert!(out.contains("cmake_minimum_required(VERSION 3.24.0)"));
         assert!(out.contains("LANGUAGES CXX CUDA HIP)"));
         assert!(out.contains("add_executable(proj_cuda ${CXX_SOURCES} ${CUDA_SOURCES})"));
         assert!(out.contains("add_executable(proj_hip ${CXX_SOURCES} ${HIP_SOURCES})"));
