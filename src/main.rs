@@ -92,10 +92,6 @@ fn main() {
         }
     };
 
-    // Create project directory and set current path
-    fs::create_dir_all(project_name).expect("Failed to create project directory");
-    std::env::set_current_dir(project_name).expect("Failed to change directory");
-
     // Collect backends in canonical order (CUDA before HIP) so derived target
     // names and emitted CMake sections stay stable.
     let mut backends = Vec::new();
@@ -110,29 +106,57 @@ fn main() {
         backends,
     };
 
-    write_sources(&features);
+    let want_gitignore = *matches.get_one::<bool>("gitignore").unwrap();
+    let want_git = *matches.get_one::<bool>("git").unwrap();
 
-    let cmakelists = cmakelists::render(project_name, cxx_std, &features);
-    File::create("CMakeLists.txt")
-        .and_then(|mut file| file.write_all(cmakelists.as_bytes()))
-        .expect("Failed to write CMakeLists.txt");
+    // Create the project directory and `cd` into it. Remember whether *this*
+    // run created it (vs. a pre-existing directory) and its absolute path, so
+    // that a mid-way generation failure can be cleaned up without touching a
+    // directory we did not make.
+    let created_dir = fs::symlink_metadata(project_name).is_err();
+    fs::create_dir_all(project_name).expect("Failed to create project directory");
+    let project_path =
+        fs::canonicalize(project_name).expect("Failed to resolve project directory path");
+    std::env::set_current_dir(&project_path).expect("Failed to change directory");
 
-    if features.has(Backend::Cuda) {
-        println!("CUDA support enabled.");
-    }
-    if features.has(Backend::Hip) {
-        println!("HIP support enabled.");
-    }
-    if features.mpi {
-        println!("OpenMPI support enabled.");
-    }
+    // Run the file-writing work so that a panic in any step is caught and the
+    // stub project directory removed (issue #6) before the process aborts.
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        write_sources(&features);
 
-    if *matches.get_one::<bool>("gitignore").unwrap() {
-        gitignore();
-    }
+        let cmakelists = cmakelists::render(project_name, cxx_std, &features);
+        File::create("CMakeLists.txt")
+            .and_then(|mut file| file.write_all(cmakelists.as_bytes()))
+            .expect("Failed to write CMakeLists.txt");
 
-    if *matches.get_one::<bool>("git").unwrap() {
-        git_init();
+        if features.has(Backend::Cuda) {
+            println!("CUDA support enabled.");
+        }
+        if features.has(Backend::Hip) {
+            println!("HIP support enabled.");
+        }
+        if features.mpi {
+            println!("OpenMPI support enabled.");
+        }
+
+        if want_gitignore {
+            gitignore();
+        }
+
+        if want_git {
+            git_init();
+        }
+    }));
+
+    if outcome.is_err() {
+        // Generation failed partway through. Only this run's freshly created
+        // directory is ours to delete; leave a pre-existing one untouched.
+        if created_dir {
+            // Step out of the directory before removing it.
+            let _ = std::env::set_current_dir(project_path.parent().unwrap_or(&project_path));
+            let _ = fs::remove_dir_all(&project_path);
+        }
+        std::process::exit(1);
     }
 
     println!("All done!");
