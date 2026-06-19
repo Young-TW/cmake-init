@@ -77,7 +77,13 @@ impl Features {
     ///
     /// MPI, when enabled, applies to every target.
     pub fn targets(&self, project_name: &str) -> Vec<Target> {
-        match self.backends.as_slice() {
+        // Normalize to distinct backends in canonical order (CUDA before HIP)
+        // so duplicate or out-of-order toggles never produce clashing targets.
+        let backends: Vec<Backend> = [Backend::Cuda, Backend::Hip]
+            .into_iter()
+            .filter(|b| self.has(*b))
+            .collect();
+        match backends.as_slice() {
             [] => vec![Target {
                 name: project_name.to_string(),
                 backend: None,
@@ -88,8 +94,7 @@ impl Features {
                 backend: Some(*single),
                 mpi: self.mpi,
             }],
-            _ => self
-                .backends
+            _ => backends
                 .iter()
                 .map(|backend| Target {
                     name: format!("{project_name}_{}", backend.suffix()),
@@ -187,6 +192,38 @@ mod tests {
             vec![
                 t("proj_cuda", Some(Backend::Cuda), true),
                 t("proj_hip", Some(Backend::Hip), true),
+            ]
+        );
+    }
+
+    #[test]
+    fn duplicate_backends_produce_single_target() {
+        // Regression test for issue #7: duplicate entries must not generate
+        // two CMake targets with identical names. After deduplication a single
+        // distinct backend collapses to one target named after the project.
+        let f = Features {
+            backends: vec![Backend::Cuda, Backend::Cuda],
+            ..Default::default()
+        };
+        assert_eq!(
+            f.targets("proj"),
+            vec![t("proj", Some(Backend::Cuda), false)]
+        );
+    }
+
+    #[test]
+    fn out_of_order_backends_emit_canonical_cuda_first() {
+        // Regression test for issue #7: backends supplied out of canonical
+        // order must still emit CUDA before HIP.
+        let f = Features {
+            backends: vec![Backend::Hip, Backend::Cuda],
+            ..Default::default()
+        };
+        assert_eq!(
+            f.targets("proj"),
+            vec![
+                t("proj_cuda", Some(Backend::Cuda), false),
+                t("proj_hip", Some(Backend::Hip), false),
             ]
         );
     }
