@@ -64,6 +64,13 @@ fn main() {
                 .help("Enable OpenMPI support"),
         )
         .arg(
+            Arg::new("kokkos")
+                .short('k')
+                .long("kokkos")
+                .action(ArgAction::SetTrue)
+                .help("Enable Kokkos support"),
+        )
+        .arg(
             Arg::new("git")
                 .long("git")
                 .default_value("true")
@@ -92,6 +99,16 @@ fn main() {
         }
     };
 
+    // Kokkos 4.x requires C++17; reject conflicting standards up front so the
+    // user gets a clear error instead of a broken generated project.
+    let want_kokkos = matches.get_flag("kokkos");
+    if want_kokkos && cxx_std < 17 {
+        eprintln!(
+            "Invalid C++ standard '{cxx_std}' for Kokkos projects. Kokkos requires C++17 or later. Please select 17, 20, 23, or 26."
+        );
+        std::process::exit(1);
+    }
+
     // Collect backends in canonical order (CUDA before HIP) so derived target
     // names and emitted CMake sections stay stable.
     let mut backends = Vec::new();
@@ -103,6 +120,7 @@ fn main() {
     }
     let features = Features {
         mpi: matches.get_flag("mpi"),
+        kokkos: want_kokkos,
         backends,
     };
 
@@ -134,6 +152,9 @@ fn main() {
         }
         if features.has(Backend::Hip) {
             println!("HIP support enabled.");
+        }
+        if features.kokkos {
+            println!("Kokkos support enabled.");
         }
         if features.mpi {
             println!("OpenMPI support enabled.");

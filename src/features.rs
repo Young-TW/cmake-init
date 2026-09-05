@@ -1,8 +1,9 @@
 //! Composable project capabilities and the build targets they imply.
 //!
-//! The CLI exposes `--mpi`, `--cuda` and `--hip` as independent toggles. The
-//! set of enabled GPU backends decides how many executables a project needs,
-//! while MPI is an orthogonal modifier applied to every target.
+//! The CLI exposes `--mpi`, `--kokkos`, `--cuda` and `--hip` as independent
+//! toggles. The set of enabled GPU backends decides how many executables a
+//! project needs, while MPI and Kokkos are orthogonal modifiers applied to
+//! every target.
 
 /// A GPU backend that compiles its own kernel sources into a target.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,6 +46,10 @@ impl Backend {
 pub struct Features {
     /// Whether every target links against MPI.
     pub mpi: bool,
+    /// Whether every target links against Kokkos; the generated entry point
+    /// initializes it after `MPI_Init` and finalizes it before
+    /// `MPI_Finalize` when MPI is also enabled.
+    pub kokkos: bool,
     /// The GPU backends to build, in a stable canonical order (CUDA before
     /// HIP).
     pub backends: Vec<Backend>,
@@ -75,7 +80,8 @@ impl Features {
     /// * both CUDA and HIP → two targets, one per backend, each suffixed with
     ///   its backend name (CUDA and HIP cannot share a target).
     ///
-    /// MPI, when enabled, applies to every target.
+    /// MPI and Kokkos, when enabled, apply to every target; as orthogonal
+    /// modifiers they never change this derivation.
     pub fn targets(&self, project_name: &str) -> Vec<Target> {
         // Normalize to distinct backends in canonical order (CUDA before HIP)
         // so duplicate or out-of-order toggles never produce clashing targets.
@@ -159,6 +165,7 @@ mod tests {
         let f = Features {
             mpi: true,
             backends: vec![Backend::Cuda],
+            ..Default::default()
         };
         assert_eq!(
             f.targets("proj"),
@@ -186,6 +193,7 @@ mod tests {
         let f = Features {
             mpi: true,
             backends: vec![Backend::Cuda, Backend::Hip],
+            ..Default::default()
         };
         assert_eq!(
             f.targets("proj"),
@@ -194,6 +202,23 @@ mod tests {
                 t("proj_hip", Some(Backend::Hip), true),
             ]
         );
+    }
+
+    #[test]
+    fn kokkos_does_not_change_target_derivation() {
+        // Kokkos is an orthogonal modifier like MPI: it only adds linking and
+        // runtime init/finalize, so the executables (count, names, backends,
+        // MPI flags) must be identical to the Kokkos-less variant.
+        let without = Features {
+            mpi: true,
+            backends: vec![Backend::Cuda, Backend::Hip],
+            ..Default::default()
+        };
+        let with = Features {
+            kokkos: true,
+            ..without.clone()
+        };
+        assert_eq!(with.targets("proj"), without.targets("proj"));
     }
 
     #[test]

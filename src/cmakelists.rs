@@ -1,8 +1,8 @@
 //! Programmatic generation of a project's `CMakeLists.txt`.
 //!
-//! The capability combinations (`mpi` x `cuda` x `hip`) do not map onto a fixed
-//! set of static templates, so the file is composed section by section from the
-//! requested [`Features`].
+//! The capability combinations (`mpi` x `kokkos` x `cuda` x `hip`) do not map
+//! onto a fixed set of static templates, so the file is composed section by
+//! section from the requested [`Features`].
 
 use crate::features::{Backend, Features};
 
@@ -10,10 +10,15 @@ use crate::features::{Backend, Features};
 pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     let mut out = String::new();
 
-    // CUDA's `native` architecture detection requires 3.24; HIP as a
-    // first-class CMake language requires 3.21; 3.20 is enough otherwise.
+    // Pick the strictest CMake floor among the enabled features. CUDA's
+    // `native` architecture detection requires 3.24, Kokkos 4.x requires
+    // 3.22, HIP as a first-class CMake language requires 3.21, and 3.20 is
+    // enough otherwise. Because 3.24 > 3.22 > 3.21 > 3.20, the else-if
+    // chain below computes that maximum directly.
     let min_version = if features.has(Backend::Cuda) {
         "3.24.0"
+    } else if features.kokkos {
+        "3.22.0"
     } else if features.has(Backend::Hip) {
         "3.21.0"
     } else {
@@ -48,6 +53,9 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
     if features.mpi {
         out.push_str("\nfind_package(MPI REQUIRED)\n");
     }
+    if features.kokkos {
+        out.push_str("\nfind_package(Kokkos REQUIRED)\n");
+    }
 
     // Glob each language's sources separately so targets can pick the kernel
     // flavour they need while sharing the C++ entry point.
@@ -73,6 +81,12 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
                 target.name
             ));
         }
+        if features.kokkos {
+            out.push_str(&format!(
+                "target_link_libraries({} PRIVATE Kokkos::kokkos)\n",
+                target.name
+            ));
+        }
         out.push_str(&format!("install(TARGETS {})\n", target.name));
     }
 
@@ -83,7 +97,7 @@ pub fn render(project_name: &str, cxx_std: i32, features: &Features) -> String {
 mod tests {
     use super::*;
 
-    fn feats(mpi: bool, cuda: bool, hip: bool) -> Features {
+    fn feats(mpi: bool, kokkos: bool, cuda: bool, hip: bool) -> Features {
         let mut backends = Vec::new();
         if cuda {
             backends.push(Backend::Cuda);
@@ -91,12 +105,16 @@ mod tests {
         if hip {
             backends.push(Backend::Hip);
         }
-        Features { mpi, backends }
+        Features {
+            mpi,
+            kokkos,
+            backends,
+        }
     }
 
     #[test]
     fn plain_cpp_single_target() {
-        let out = render("proj", 17, &feats(false, false, false));
+        let out = render("proj", 17, &feats(false, false, false, false));
         assert!(out.contains("cmake_minimum_required(VERSION 3.20.0)"));
         assert!(out.contains("project(proj VERSION 0.0.0 LANGUAGES CXX)"));
         assert!(out.contains("set(CMAKE_CXX_STANDARD 17)"));
@@ -111,14 +129,14 @@ mod tests {
 
     #[test]
     fn mpi_links_the_target() {
-        let out = render("proj", 20, &feats(true, false, false));
+        let out = render("proj", 20, &feats(true, false, false, false));
         assert!(out.contains("find_package(MPI REQUIRED)"));
         assert!(out.contains("target_link_libraries(proj PRIVATE MPI::MPI_CXX)"));
     }
 
     #[test]
     fn cuda_enables_language_and_globs_kernels() {
-        let out = render("proj", 17, &feats(false, true, false));
+        let out = render("proj", 17, &feats(false, false, true, false));
         assert!(out.contains("LANGUAGES CXX CUDA)"));
         assert!(out.contains("set(CMAKE_CUDA_ARCHITECTURES native)"));
         assert!(out.contains("file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS ./src/*.cu)"));
@@ -132,7 +150,7 @@ mod tests {
     // first release that supports `native`).
     #[test]
     fn cuda_uses_native_architectures() {
-        let out = render("proj", 17, &feats(false, true, false));
+        let out = render("proj", 17, &feats(false, false, true, false));
         assert!(
             out.contains("set(CMAKE_CUDA_ARCHITECTURES native)"),
             "CUDA architectures should default to `native`, not a hard-coded \
@@ -152,7 +170,7 @@ mod tests {
 
     #[test]
     fn hip_bumps_min_version() {
-        let out = render("proj", 17, &feats(false, false, true));
+        let out = render("proj", 17, &feats(false, false, false, true));
         assert!(out.contains("cmake_minimum_required(VERSION 3.21.0)"));
         assert!(out.contains("LANGUAGES CXX HIP)"));
         assert!(out.contains("set(CMAKE_HIP_ARCHITECTURES gfx906)"));
@@ -161,7 +179,7 @@ mod tests {
 
     #[test]
     fn cuda_and_hip_emit_two_suffixed_targets() {
-        let out = render("proj", 17, &feats(false, true, true));
+        let out = render("proj", 17, &feats(false, false, true, true));
         assert!(out.contains("cmake_minimum_required(VERSION 3.24.0)"));
         assert!(out.contains("LANGUAGES CXX CUDA HIP)"));
         assert!(out.contains("add_executable(proj_cuda ${CXX_SOURCES} ${CUDA_SOURCES})"));
@@ -172,14 +190,54 @@ mod tests {
 
     #[test]
     fn mpi_cuda_hip_links_both_targets() {
-        let out = render("proj", 17, &feats(true, true, true));
+        let out = render("proj", 17, &feats(true, false, true, true));
         assert!(out.contains("target_link_libraries(proj_cuda PRIVATE MPI::MPI_CXX)"));
         assert!(out.contains("target_link_libraries(proj_hip PRIVATE MPI::MPI_CXX)"));
     }
 
     #[test]
+    fn kokkos_is_found_linked_and_requires_3_22() {
+        let out = render("proj", 17, &feats(false, true, false, false));
+        assert!(out.contains("cmake_minimum_required(VERSION 3.22.0)"));
+        assert!(out.contains("find_package(Kokkos REQUIRED)"));
+        assert!(out.contains("target_link_libraries(proj PRIVATE Kokkos::kokkos)"));
+        assert!(!out.contains("find_package(MPI"));
+        assert!(!out.contains("MPI::MPI_CXX"));
+    }
+
+    #[test]
+    fn kokkos_links_every_target_when_backends_split() {
+        let out = render("proj", 17, &feats(false, true, true, true));
+        assert!(out.contains("target_link_libraries(proj_cuda PRIVATE Kokkos::kokkos)"));
+        assert!(out.contains("target_link_libraries(proj_hip PRIVATE Kokkos::kokkos)"));
+    }
+
+    #[test]
+    fn cuda_floor_wins_over_kokkos_in_min_version_ladder() {
+        // CUDA's 3.24 requirement exceeds Kokkos's 3.22.
+        let out = render("proj", 17, &feats(false, true, true, false));
+        assert!(out.contains("cmake_minimum_required(VERSION 3.24.0)"));
+    }
+
+    #[test]
+    fn kokkos_floor_wins_over_hip_in_min_version_ladder() {
+        // Kokkos's 3.22 exceeds HIP's 3.21.
+        let out = render("proj", 17, &feats(false, true, false, true));
+        assert!(out.contains("cmake_minimum_required(VERSION 3.22.0)"));
+    }
+
+    #[test]
+    fn mpi_and_kokkos_are_both_found_and_linked() {
+        let out = render("proj", 17, &feats(true, true, false, false));
+        assert!(out.contains("find_package(MPI REQUIRED)"));
+        assert!(out.contains("find_package(Kokkos REQUIRED)"));
+        assert!(out.contains("target_link_libraries(proj PRIVATE MPI::MPI_CXX)"));
+        assert!(out.contains("target_link_libraries(proj PRIVATE Kokkos::kokkos)"));
+    }
+
+    #[test]
     fn project_name_is_substituted() {
-        let out = render("my_app", 23, &feats(false, false, false));
+        let out = render("my_app", 23, &feats(false, false, false, false));
         assert!(out.contains("project(my_app "));
     }
 }

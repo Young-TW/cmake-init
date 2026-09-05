@@ -4,7 +4,8 @@
 //! when a GPU backend is enabled it simply calls `run_kernel()`, which each
 //! backend's kernel file (`kernel.cu` / `kernel.hip`) defines. This keeps the
 //! entry point shareable across the two targets produced when both CUDA and HIP
-//! are requested.
+//! are requested. Requested runtime dependencies (MPI, Kokkos) are initialized
+//! and finalized around the body of `main` in a fixed order.
 
 use std::fs::{self, File};
 use std::io::Write;
@@ -42,15 +43,20 @@ fn write_if_absent(path: &Path, content: &str) {
         .expect("Failed to write source file");
 }
 
-/// Build the contents of `main.cpp` for the requested features. The entry point
-/// initializes MPI when requested and calls `run_kernel()` when a GPU backend
-/// is enabled.
+/// Build the contents of `main.cpp` for the requested features. The entry
+/// point brings dependencies up in a fixed order — `MPI_Init`, then
+/// `Kokkos::initialize` — calls `run_kernel()` when a GPU backend is enabled,
+/// and tears everything down in reverse order (`Kokkos::finalize`, then
+/// `MPI_Finalize`) so MPI stays alive underneath MPI-aware Kokkos paths.
 fn render_main_cpp(features: &Features) -> String {
     let has_backend = !features.backends.is_empty();
 
     let mut out = String::from("#include <iostream>\n");
     if features.mpi {
         out.push_str("#include <mpi.h>\n");
+    }
+    if features.kokkos {
+        out.push_str("#include <Kokkos_Core.hpp>\n");
     }
 
     if has_backend {
@@ -61,7 +67,19 @@ fn render_main_cpp(features: &Features) -> String {
     out.push_str("\nint main(int argc, char* argv[]) {\n");
 
     if features.mpi {
-        out.push_str("    MPI_Init(&argc, &argv);\n\n");
+        out.push_str("    MPI_Init(&argc, &argv);\n");
+    }
+    if features.kokkos {
+        if features.mpi {
+            out.push('\n');
+        }
+        out.push_str("    Kokkos::initialize(argc, argv);\n");
+    }
+    if features.mpi || features.kokkos {
+        out.push('\n');
+    }
+
+    if features.mpi {
         out.push_str("    int rank = 0;\n");
         out.push_str("    int size = 0;\n");
         out.push_str("    MPI_Comm_rank(MPI_COMM_WORLD, &rank);\n");
@@ -77,8 +95,14 @@ fn render_main_cpp(features: &Features) -> String {
         out.push_str("    run_kernel();\n");
     }
 
+    if features.mpi || features.kokkos {
+        out.push('\n');
+    }
+    if features.kokkos {
+        out.push_str("    Kokkos::finalize();\n");
+    }
     if features.mpi {
-        out.push_str("\n    MPI_Finalize();\n");
+        out.push_str("    MPI_Finalize();\n");
     }
 
     out.push_str("    return 0;\n");
@@ -91,7 +115,7 @@ mod tests {
     use super::*;
     use crate::test_util::in_temp_dir;
 
-    fn feats(mpi: bool, cuda: bool, hip: bool) -> Features {
+    fn feats(mpi: bool, kokkos: bool, cuda: bool, hip: bool) -> Features {
         let mut backends = Vec::new();
         if cuda {
             backends.push(Backend::Cuda);
@@ -99,13 +123,17 @@ mod tests {
         if hip {
             backends.push(Backend::Hip);
         }
-        Features { mpi, backends }
+        Features {
+            mpi,
+            kokkos,
+            backends,
+        }
     }
 
     #[test]
     fn plain_writes_only_main_cpp() {
         in_temp_dir(|| {
-            write_sources(&feats(false, false, false));
+            write_sources(&feats(false, false, false, false));
             let main = fs::read_to_string("./src/main.cpp").unwrap();
             assert!(main.contains("Hello, World!"));
             assert!(!main.contains("run_kernel"));
@@ -117,7 +145,7 @@ mod tests {
     #[test]
     fn mpi_entry_initializes_mpi() {
         in_temp_dir(|| {
-            write_sources(&feats(true, false, false));
+            write_sources(&feats(true, false, false, false));
             let main = fs::read_to_string("./src/main.cpp").unwrap();
             assert!(main.contains("MPI_Init"));
             assert!(main.contains("MPI_Finalize"));
@@ -128,7 +156,7 @@ mod tests {
     #[test]
     fn cuda_writes_kernel_and_calls_it() {
         in_temp_dir(|| {
-            write_sources(&feats(false, true, false));
+            write_sources(&feats(false, false, true, false));
             let main = fs::read_to_string("./src/main.cpp").unwrap();
             assert!(main.contains("run_kernel();"));
             let kernel = fs::read_to_string("./src/kernel.cu").unwrap();
@@ -140,7 +168,7 @@ mod tests {
     #[test]
     fn hip_writes_kernel_and_calls_it() {
         in_temp_dir(|| {
-            write_sources(&feats(false, false, true));
+            write_sources(&feats(false, false, false, true));
             let main = fs::read_to_string("./src/main.cpp").unwrap();
             assert!(main.contains("run_kernel();"));
             let kernel = fs::read_to_string("./src/kernel.hip").unwrap();
@@ -152,7 +180,7 @@ mod tests {
     #[test]
     fn cuda_and_hip_write_both_kernels_with_shared_entry() {
         in_temp_dir(|| {
-            write_sources(&feats(false, true, true));
+            write_sources(&feats(false, false, true, true));
             let main = fs::read_to_string("./src/main.cpp").unwrap();
             // The indented form is the call site (the declaration is unindented).
             assert_eq!(main.matches("    run_kernel();").count(), 1);
@@ -164,10 +192,10 @@ mod tests {
     #[test]
     fn existing_files_are_preserved() {
         in_temp_dir(|| {
-            write_sources(&feats(false, true, false));
+            write_sources(&feats(false, false, true, false));
             fs::write("./src/main.cpp", "custom entry").unwrap();
             fs::write("./src/kernel.cu", "custom kernel").unwrap();
-            write_sources(&feats(false, true, false));
+            write_sources(&feats(false, false, true, false));
             assert_eq!(
                 fs::read_to_string("./src/main.cpp").unwrap(),
                 "custom entry"
@@ -181,8 +209,37 @@ mod tests {
 
     #[test]
     fn mpi_cuda_entry_does_both() {
-        let main = render_main_cpp(&feats(true, true, false));
+        let main = render_main_cpp(&feats(true, false, true, false));
         assert!(main.contains("MPI_Init"));
         assert!(main.contains("run_kernel();"));
+    }
+
+    #[test]
+    fn kokkos_entry_initializes_and_finalizes_kokkos() {
+        let main = render_main_cpp(&feats(false, true, false, false));
+        assert!(main.contains("#include <Kokkos_Core.hpp>"));
+        assert!(main.contains("Kokkos::initialize(argc, argv);"));
+        assert!(main.contains("Kokkos::finalize();"));
+        assert!(!main.contains("MPI_Init"));
+        assert!(!main.contains("MPI_Finalize"));
+    }
+
+    #[test]
+    fn mpi_and_kokkos_lifecycle_is_properly_ordered() {
+        // Mixed-dependency lifecycle: MPI_Init -> Kokkos::initialize -> ...
+        // -> Kokkos::finalize -> MPI_Finalize, so MPI stays alive underneath
+        // any MPI-aware Kokkos path in both directions.
+        let main = render_main_cpp(&feats(true, true, true, false));
+        let mpi_init = main.find("MPI_Init").expect("missing MPI_Init");
+        let kokkos_init = main
+            .find("Kokkos::initialize")
+            .expect("missing Kokkos::initialize");
+        let kokkos_finalize = main
+            .find("Kokkos::finalize")
+            .expect("missing Kokkos::finalize");
+        let mpi_finalize = main.find("MPI_Finalize").expect("missing MPI_Finalize");
+        assert!(mpi_init < kokkos_init);
+        assert!(kokkos_init < kokkos_finalize);
+        assert!(kokkos_finalize < mpi_finalize);
     }
 }

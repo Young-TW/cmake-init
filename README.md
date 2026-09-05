@@ -56,6 +56,7 @@ If you use CUDA/HIP, you need to edit the `CMakeLists.txt` file to set the archi
 | `--cuda`         | `-c`   | `false`  | Enable CUDA support (`true`/`false`)              |
 | `--hip`          | `-i`   | `false`  | Enable HIP support (`true`/`false`)               |
 | `--mpi`          | `-m`   | `false`  | Enable OpenMPI support (`true`/`false`)           |
+| `--kokkos`       | `-k`   | `false`  | Enable Kokkos support (requires C++17+)           |
 | `--git`          |        | `true`   | Initialize a Git repository (`true`/`false`)      |
 
 ### Backend combinations
@@ -81,6 +82,31 @@ executables; otherwise a single executable named after the project is built.
 
 Enabling HIP raises the generated `cmake_minimum_required` to 3.21 (the first
 CMake release with first-class HIP language support).
+
+### Kokkos
+
+`--kokkos` (`-k`) is an orthogonal dependency like `--mpi`: it does not change
+the number of executables. The generated `CMakeLists.txt` adds
+`find_package(Kokkos REQUIRED)` and links `Kokkos::kokkos` into every target,
+and the generated `main.cpp` brings dependencies up and down in a fixed order
+so Kokkos always runs on top of a live MPI:
+
+```cpp
+MPI_Init(&argc, &argv);
+Kokkos::initialize(argc, argv);
+/* ... */
+Kokkos::finalize();
+MPI_Finalize();
+```
+
+Notes:
+
+- Kokkos 4.x requires C++17 or later, so combining `--kokkos` with
+  `--cxx-std 11`/`14` is rejected up front.
+- Enabling Kokkos raises the generated `cmake_minimum_required` to 3.22
+  (unless CUDA is also enabled, which needs 3.24).
+- Which execution space Kokkos uses (Serial, OpenMP, CUDA, HIP, ...) is
+  decided by your installed Kokkos build, not by cmake-init.
 
 ### Example
 
